@@ -1,0 +1,3 @@
+[submodule "brilliant"]
+	path = brilliant
+	url = https://github.com/KingBright/brilliant.git
