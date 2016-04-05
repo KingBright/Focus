@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="source_list">
+        <!-- design -->
+        <item>理想生活实验室|http://www.toodaylab.com/feed</item>
+        <item>Cinephilia迷影|http://cinephilia.net/feed</item>
+        <item>时尚生活杂志|http://www.adaymag.com/feed/</item>
+        <item>优设|http://www.uisdc.com/feed</item>
+
+        <!-- tech -->
+        <item>Engadget中国版|http://cn.engadget.com/rss.xml</item>
+        <item>cnBeta|http://rss.cnbeta.com/rss</item>
+        <item>月光微博客|http://www.williamlong.info/blog/rss.xml</item>
+        <item>锋客网|http://www.phonekr.com/feed/</item>
+        <item>WPDang|http://www.wpdang.com/feed</item>
+        <item>科学松鼠会|http://songshuhui.net/feed</item>
+        <item>极客公园|http://feeds.geekpark.net/</item>
+        <item>谷奥|http://feed.google.org.cn/</item>
+        <item>同步控|http://www.syncoo.com/feed</item>
+        <item>36氪|http://www.36kr.com/feed</item>
+        <item>爱范儿|http://www.ifanr.com/feed</item>
+        <item>极客范|http://www.geekfan.net/feed/</item>
+        <item>nhzy资讯|http://www.nhzy.org/?feed=rss2</item>
+        <item>科学公园|http://www.scipark.net/feed/</item>
+        <item>泛科学|http://pansci.asia/feed</item>
+
+        <item>知乎每日精选|http://www.zhihu.com/rss</item>
+
+        <!-- Reading -->
+        <item>读写人|http://www.duxieren.com/duxieren.xml</item>
+        <item>译言精选|http://www.adaymag.com/feed/</item>
+        <item>词穷先生美文网|http://www.ciqiong.cn/feed</item>
+        <item>一个|http://onehd.herokuapp.com/</item>
+        <item>南都周刊|http://www.nbweekly.com/rss/smw/</item>
+        <item>网易新闻有态度专栏|http://news.163.com/special/00011K6L/rss_newsattitude.xml</item>
+
+        <!-- Blog -->
+        <item>孤岛客|http://www.huangjiwei.com/blog/?feed=rss2</item>
+        <item>学而时嘻之|http://www.geekonomics10000.com/feed</item>
+        <item>徐贲的博客|http://blog.sina.com.cn/rss/1286402547.xml</item>
+        <item>Matrix67|http://www.matrix67.com/blog/feed</item>
+        <item>CoolShell|http://coolshell.cn/feed</item>
+        <item>饶毅|http://www.sciencenet.cn/blog/userRSS.aspx?uid=2237</item>
+        <item>施一公|http://www.sciencenet.cn/blog/userRSS.aspx?uid=46212</item>
+        <item>苏群|http://blog.sina.com.cn/rss/1156966391.xml</item>
+
+        <!-- news -->
+        <item>政见|http://cnpolitics.org/feed/</item>
+        <item>大家|http://hanhanone.sinaapp.com/feed/dajia</item>
+        <item>爱思想|http://www.aisixiang.com/rss.php?type=1</item>
+        <item>南都周刊|http://www.nbweekly.com/rss/smw/</item>
+        <item>XX观察|https://www.hrw.org/zh-hans/rss/news</item>
+        <item>海德沙龙|http://headsalon.org/feed</item>
+        <item>自由亚洲电台|http://www.rfa.org/mandarin/RSS</item>
+        <item>经济学人中文版|http://blog.ecocn.org/feed</item>
+        <item>德国之声|http://rss.dw.com/rdf/rss-chi-all</item>
+        <item>纽约时报|http://cn.nytimes.com/rss.html</item>
+        <item>我在中国|https://cochina.co/feed/</item>
+        <item>壹读博文|http://yidu.im/rss</item>
+        <item>BBC中文网|http://www.bbc.com/zhongwen/simp/index.xml</item>
+        <item>每日鲜果精选|http://xianguo.com/service/dailyshare</item>
+        <item>联合早报国际|http://zaobao.feedsportal.com/c/34003/f/616931/index.rss</item>
+        <item>联合早报国内|http://zaobao.feedsportal.com/c/34003/f/616930/index.rss</item>
+
+        <!-- zhihu daily -->
+        <item>知乎日报|http://zhihurss.miantiao.me/dailyrss</item>
+        <item>足球日报|http://zhihurss.miantiao.me/daily/id/8</item>
+        <item>动漫日报|http://zhihurss.miantiao.me/daily/id/9</item>
+        <item>设计日报|http://zhihurss.miantiao.me/daily/id/4</item>
+        <item>开始游戏|http://zhihurss.miantiao.me/daily/id/2</item>
+        <item>财经日报|http://zhihurss.miantiao.me/daily/id/6</item>
+        <item>电影日报|http://zhihurss.miantiao.me/daily/id/3</item>
+        <item>电子音乐|http://zhihurss.miantiao.me/daily/id/7</item>
+        <item>不许无聊|http://zhihurss.miantiao.me/daily/id/11</item>
+        <item>大公司日报|http://zhihurss.miantiao.me/daily/id/5</item>
+        <item>互联网安全|http://zhihurss.miantiao.me/daily/id/10</item>
+        <item>深夜食堂|http://zhihurss.miantiao.me/section/id/1</item>
+        <item>瞎扯|http://zhihurss.miantiao.me/section/id/2</item>
+        <item>吃很重要|http://zhihurss.miantiao.me/section/id/3</item>
+        <item>知天下|http://zhihurss.miantiao.me/section/id/5</item>
+        <item>苗炜专栏|http://zhihurss.miantiao.me/section/id/6</item>
+        <item>小道消息|http://zhihurss.miantiao.me/section/id/7</item>
+        <item>硬科技|http://zhihurss.miantiao.me/section/id/8</item>
+        <item>最美应用|http://zhihurss.miantiao.me/section/id/9</item>
+        <item>鲜柚游戏周报|http://zhihurss.miantiao.me/section/id/10</item>
+        <item>豌豆荚设计奖|http://zhihurss.miantiao.me/section/id/11</item>
+        <item>一周一折腾|http://zhihurss.miantiao.me/section/id/12</item>
+        <item>麻省理工科技评论|http://zhihurss.miantiao.me/section/id/14</item>
+        <item>周末话题优秀评论精选|http://zhihurss.miantiao.me/section/id/15</item>
+        <item>整点儿新闻|http://zhihurss.miantiao.me/section/id/16</item>
+        <item>饿了|http://zhihurss.miantiao.me/section/id/17</item>
+    </string-array>
+</resources>

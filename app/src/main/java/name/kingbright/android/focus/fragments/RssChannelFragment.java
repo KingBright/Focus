@@ -1,0 +1,142 @@
+package name.kingbright.android.focus.fragments;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import java.util.List;
+
+import butterknife.Bind;
+import name.kingbright.android.brilliant.app.BaseFragment;
+import name.kingbright.android.brilliant.app.FragmentIntent;
+import name.kingbright.android.brilliant.json.JsonUtil;
+import name.kingbright.android.brilliant.log.LogUtil;
+import name.kingbright.android.brilliant.widgets.AbsViewBinder;
+import name.kingbright.android.brilliant.widgets.RecyclerAdapter;
+import name.kingbright.android.brilliant.widgets.SwipeRefreshRecyclerView;
+import name.kingbright.android.brilliant.widgets.recyclerview.Mode;
+import name.kingbright.android.focus.R;
+import name.kingbright.android.focus.rss.FeedFetcher;
+import name.kingbright.android.focus.rss.Rss;
+import name.kingbright.android.focus.rss.source.Source;
+import name.kingbright.android.focus.rss.source.SourceReader;
+import rx.Observer;
+
+/**
+ * @author Jin Liang
+ * @since 16/1/5
+ */
+public class RssChannelFragment extends BaseFragment {
+    private static final String TAG = "RecommendRssFragment";
+    @Bind(R.id.listView)
+    SwipeRefreshRecyclerView mListView;
+
+    private SourceReader mReader;
+    private RecyclerAdapter mAdapter;
+    private Observer<? super List<Source>> mCallback = new Observer<List<Source>>() {
+        @Override
+        public void onCompleted() {
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onNext(List<Source> sources) {
+            mAdapter.update(sources);
+            if (mListView.isRefreshing()) {
+                mListView.setRefreshing(false);
+            }
+        }
+    };
+
+    @Nullable
+    protected View createView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.rss_channel_fragment, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mListView.setMode(Mode.LIST_VERTICAL);
+        mListView.setItemAnimator(new DefaultItemAnimator());
+        mListView.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
+
+        mAdapter = new RecyclerAdapter<RssViewBinder, Source>() {
+            @Override
+            protected RssViewBinder createView(LayoutInflater inflater, ViewGroup parent, int viewType) {
+                Context context = parent.getContext();
+                View view = LayoutInflater.from(context).inflate(R.layout.channel_item_view, parent, false);
+                return new RssViewBinder(view);
+            }
+        };
+        mListView.setAdapter(mAdapter);
+
+        mReader = new SourceReader(getActivity());
+        mReader.readSourceList().subscribe(mCallback);
+    }
+
+    private void refresh() {
+        mReader.readSourceList().subscribe(mCallback);
+    }
+
+    class RssViewBinder extends AbsViewBinder<Source> {
+        @Bind(R.id.title)
+        TextView mTitle;
+
+        public RssViewBinder(View view) {
+            super(view);
+        }
+
+        @Override
+        public void bind(Source source) {
+            mTitle.setText(source.title);
+        }
+
+        @Override
+        protected void onViewClick(View view, Source data) {
+            final ProgressDialog dialog = new ProgressDialog(getContext());
+            dialog.setMessage("loading...");
+            dialog.show();
+
+            FeedFetcher.getInstance().fetch(data.url).subscribe(new Observer<Rss>() {
+                @Override
+                public void onCompleted() {
+                    LogUtil.d("Rss", "complete");
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    LogUtil.d("Rss", e);
+                    e.printStackTrace();
+                    dialog.dismiss();
+                }
+
+                @Override
+                public void onNext(Rss rssFeed) {
+                    LogUtil.d("Rss", "data get");
+                    Bundle bundle = new Bundle();
+                    bundle.putString("rss", JsonUtil.toJson(rssFeed));
+                    FragmentIntent fragmentIntent = new FragmentIntent(RssItemListFragment.class, bundle);
+                    getFragmentNavigator().startFragment(fragmentIntent);
+                    dialog.dismiss();
+                }
+            });
+        }
+    }
+}
