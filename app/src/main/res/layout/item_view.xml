@@ -24,11 +24,10 @@
 
         <name.kingbright.android.focus.widgets.RichTextView
             android:id="@+id/content"
-            style="@style/TextAppearance.AppCompat.Body1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/title"
             android:layout_margin="4dp"
-            android:lineSpacingExtra="3dp" />
+            android:orientation="vertical" />
     </RelativeLayout>
 </android.support.v7.widget.CardView>

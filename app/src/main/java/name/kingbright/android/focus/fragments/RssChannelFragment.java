@@ -6,10 +6,12 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -47,15 +49,13 @@ public class RssChannelFragment extends BaseFragment {
 
         @Override
         public void onError(Throwable e) {
-
+            mListView.setRefreshing(false);
         }
 
         @Override
         public void onNext(List<Source> sources) {
             mAdapter.update(sources);
-            if (mListView.isRefreshing()) {
-                mListView.setRefreshing(false);
-            }
+            mListView.setRefreshing(false);
         }
     };
 
@@ -109,11 +109,15 @@ public class RssChannelFragment extends BaseFragment {
         }
 
         @Override
-        protected void onViewClick(View view, Source data) {
-            final ProgressDialog dialog = new ProgressDialog(getContext());
-            dialog.setMessage("loading...");
-            dialog.show();
+        protected void onViewClick(View view, final Source data) {
+            if (data == null || TextUtils.isEmpty(data.url)) {
+                Toast.makeText(getContext(), R.string.err_rss_url_empty, Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            final ProgressDialog dialog = new ProgressDialog(getContext());
+            dialog.setMessage(getString(R.string.trying_to_load));
+            dialog.show();
             FeedFetcher.getInstance().fetch(data.url).subscribe(new Observer<Rss>() {
                 @Override
                 public void onCompleted() {
@@ -131,6 +135,7 @@ public class RssChannelFragment extends BaseFragment {
                 public void onNext(Rss rssFeed) {
                     LogUtil.d("Rss", "data get");
                     Bundle bundle = new Bundle();
+                    rssFeed.url = data.url;
                     bundle.putString("rss", JsonUtil.toJson(rssFeed));
                     FragmentIntent fragmentIntent = new FragmentIntent(RssItemListFragment.class, bundle);
                     getFragmentNavigator().startFragment(fragmentIntent);

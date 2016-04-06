@@ -6,4 +6,6 @@
 
     <string name="action_settings">Settings</string>
     <string name="manage">管理</string>
+    <string name="err_rss_url_empty">数据有误，请尝试其他资源</string>
+    <string name="trying_to_load">努力加载中</string>
 </resources>

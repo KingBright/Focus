@@ -15,15 +15,18 @@ import butterknife.Bind;
 import butterknife.OnClick;
 import name.kingbright.android.brilliant.app.BaseFragment;
 import name.kingbright.android.brilliant.json.JsonUtil;
+import name.kingbright.android.brilliant.log.LogUtil;
 import name.kingbright.android.brilliant.widgets.AbsViewBinder;
 import name.kingbright.android.brilliant.widgets.RecyclerAdapter;
 import name.kingbright.android.brilliant.widgets.SwipeRefreshRecyclerView;
 import name.kingbright.android.brilliant.widgets.recyclerview.Mode;
 import name.kingbright.android.focus.R;
+import name.kingbright.android.focus.rss.FeedFetcher;
 import name.kingbright.android.focus.rss.Item;
 import name.kingbright.android.focus.rss.Rss;
 import name.kingbright.android.focus.rss.source.Source;
 import name.kingbright.android.focus.widgets.RichTextView;
+import rx.Observer;
 
 /**
  * @author Jin Liang
@@ -81,6 +84,27 @@ public class RssItemListFragment extends BaseFragment {
     private void refresh() {
         if (mRss == null) {
             mListView.setRefreshing(false);
+        } else {
+            FeedFetcher.getInstance().fetch(mRss.url).subscribe(new Observer<Rss>() {
+                @Override
+                public void onCompleted() {
+                    LogUtil.d("Rss", "complete");
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    LogUtil.d("Rss", e);
+                    e.printStackTrace();
+                    mListView.setRefreshing(false);
+                }
+
+                @Override
+                public void onNext(Rss rssFeed) {
+                    LogUtil.d("Rss", "data get");
+                    mAdapter.update(rssFeed.channel.itemList);
+                    mListView.setRefreshing(false);
+                }
+            });
         }
     }
 
@@ -105,12 +129,12 @@ public class RssItemListFragment extends BaseFragment {
             mTitle.setText(item.title);
             if (!TextUtils.isEmpty(item.content)) {
                 if (TextUtils.isEmpty(item.description)) {
-                    mContent.setRichText(item.content);
+                    mContent.setHtmlText(item.content);
                 } else if (item.content.length() > item.description.length()) {
-                    mContent.setRichText(item.content);
+                    mContent.setHtmlText(item.content);
                 }
             } else {
-                mContent.setRichText(item.description);
+                mContent.setHtmlText(item.description);
             }
         }
 

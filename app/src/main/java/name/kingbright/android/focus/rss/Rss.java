@@ -11,4 +11,6 @@ public class Rss {
 
     @Element
     public Channel channel;
+
+    public String url;
 }
