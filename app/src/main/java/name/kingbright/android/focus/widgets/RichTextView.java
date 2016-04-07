@@ -6,16 +6,18 @@ import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.AppCompatTextView;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.AttributeSet;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.facebook.drawee.backends.pipeline.PipelineDraweeControllerBuilder;
 import com.facebook.drawee.controller.ControllerListener;
@@ -34,6 +36,8 @@ import name.kingbright.android.focus.R;
  * @since 16/4/6
  */
 public class RichTextView extends LinearLayout {
+
+    private static RecycledViewPool recycledViewPool = new RecycledViewPool();
     private static final String TAG = "RichTextView";
     private static Pattern IMAGE_TAG_PATTERN = Pattern.compile("\\<img(.*?)\\>");
     private static Pattern VIDEO_TAG_PATTERN = Pattern.compile("\\<video(.*?)\\>");
@@ -41,17 +45,21 @@ public class RichTextView extends LinearLayout {
     private static Pattern IMAGE_HEIGHT_PATTERN = Pattern.compile("height=\"(.*?)\"");
     private static Pattern IMAGE_SRC_PATTERN = Pattern.compile("src=\"(.*?)\"");
 
+    private ArrayList<View> mViews;
     private ArrayList<ImageHolder> mImages;
+    private ArrayList<VideoHolder> mVideos;
 
     private ArrayList<RenderItem> mRenderList;
     private Runnable mDisplayRunnable = new Runnable() {
         @Override
         public void run() {
+            mViews = new ArrayList<>();
             mDisplayed = true;
             Context context = getContext();
             LayoutInflater inflater = LayoutInflater.from(context);
             for (RenderItem renderItem : mRenderList) {
                 View view = renderItem.getView(inflater, context);
+                mViews.add(view);
                 addView(view);
             }
         }
@@ -83,10 +91,24 @@ public class RichTextView extends LinearLayout {
         }
     }
 
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        recycledViewPool.onViewAttached();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        removeAllViews();
+        for (View view : mViews) {
+            recycledViewPool.putView(view);
+        }
+        recycledViewPool.onViewDetached();
+    }
+
     public void setHtmlText(String text) {
         mDisplayed = false;
-        // Remove old childs
-        removeAllViews();
         // Find all image tags
         matchImages(text);
         LogUtil.d(TAG, "Images : " + mImages.size());
@@ -195,7 +217,7 @@ public class RichTextView extends LinearLayout {
         return null;
     }
 
-    private static class ImageHolder {
+    private class ImageHolder {
         private final Uri src;
         public int width = -1, height = -1;
 
@@ -204,29 +226,65 @@ public class RichTextView extends LinearLayout {
         }
     }
 
-    private class TextRenderItem extends RenderItem<CharSequence> {
+    private class VideoHolder {
+        private final Uri src;
+        public int width = -1, height = -1;
+
+        public VideoHolder(Uri src) {
+            this.src = src;
+        }
+    }
+
+    private class VideoRenderItem extends RenderItem<VideoHolder, VideoView> {
+
+        public VideoRenderItem(VideoHolder data) {
+            super(data);
+        }
+
+        @Override
+        protected Class getViewClass() {
+            return VideoView.class;
+        }
+
+        @Override
+        protected VideoView getView(LayoutInflater inflater, View view, Context context, VideoHolder data) {
+            return null;
+        }
+    }
+
+    private class TextRenderItem extends RenderItem<CharSequence, AppCompatTextView> {
 
         public TextRenderItem(CharSequence data) {
             super(data);
         }
 
         @Override
-        protected View getView(LayoutInflater inflater, Context context, CharSequence data) {
-            TextView textView = (TextView) inflater.inflate(R.layout.text_view, RichTextView.this, false);
+        protected Class getViewClass() {
+            return AppCompatTextView.class;
+        }
+
+        @Override
+        protected AppCompatTextView getView(LayoutInflater inflater, View view, Context context, CharSequence data) {
+            AppCompatTextView textView = view != null ? (AppCompatTextView) view : (AppCompatTextView) inflater.inflate(R.layout.text_view, RichTextView.this, false);
             textView.setText(data);
             return textView;
         }
     }
 
-    private class ImageRenderItem extends RenderItem<ImageHolder> {
+    private class ImageRenderItem extends RenderItem<ImageHolder, ImageView> {
 
         public ImageRenderItem(ImageHolder data) {
             super(data);
         }
 
         @Override
-        protected View getView(LayoutInflater inflater, Context context, ImageHolder data) {
-            ImageView imageView = (ImageView) inflater.inflate(R.layout.image_view, RichTextView.this, false);
+        protected Class getViewClass() {
+            return ImageView.class;
+        }
+
+        @Override
+        protected View getView(LayoutInflater inflater, View view, Context context, ImageHolder data) {
+            ImageView imageView = view != null ? (ImageView) view : (ImageView) inflater.inflate(R.layout.image_view, RichTextView.this, false);
             PipelineDraweeControllerBuilder builder = imageView.getControllerBuilder();
             builder.setAutoPlayAnimations(true).setControllerListener(new ControllerListener<ImageInfo>() {
                 ImageView imageView;
@@ -281,17 +339,72 @@ public class RichTextView extends LinearLayout {
         }
     }
 
-    private abstract class RenderItem<T> {
+    private abstract class RenderItem<T, K extends View> {
         private T data;
 
         public RenderItem(T data) {
             this.data = data;
         }
 
-        public View getView(LayoutInflater inflater, Context context) {
-            return getView(inflater, context, data);
+        public K getView(LayoutInflater inflater, Context context) {
+            View view = recycledViewPool.getView(getViewClass());
+            return (K) getView(inflater, view, context, data);
         }
 
-        protected abstract View getView(LayoutInflater inflater, Context context, T data);
+        protected abstract Class getViewClass();
+
+        protected abstract View getView(LayoutInflater inflater, View view, Context context, T data);
+    }
+
+    private static class RecycledViewPool {
+        private SparseArray<ArrayList<View>> recycledViews = new SparseArray<>();
+        private ArrayList<String> typeList = new ArrayList<>();
+        private int attachCount;
+
+        public void putView(View view) {
+            int type = getViewType(view.getClass());
+            ArrayList<View> list = recycledViews.get(type);
+            if (list == null) {
+                list = new ArrayList<>();
+                recycledViews.append(type, list);
+            }
+            LogUtil.d(TAG, "put cache view : " + view.getClass().getName() + " with type : " + type);
+            list.add(view);
+        }
+
+        private String getViewName(Class cls) {
+            return cls.getName();
+        }
+
+        private int getViewType(Class cls) {
+            String name = getViewName(cls);
+            if (!typeList.contains(name)) {
+                typeList.add(name);
+            }
+            return typeList.indexOf(name);
+        }
+
+        public View getView(Class cls) {
+            int type = getViewType(cls);
+            ArrayList<View> list = recycledViews.get(type);
+            if (list == null || list.size() == 0) {
+                return null;
+            } else {
+                LogUtil.d(TAG, "get cached view");
+                return list.remove(0);
+            }
+        }
+
+        public void onViewAttached() {
+            attachCount++;
+        }
+
+        public void onViewDetached() {
+            attachCount--;
+            if (attachCount == 0) {
+                recycledViews.clear();
+                typeList.clear();
+            }
+        }
     }
 }
