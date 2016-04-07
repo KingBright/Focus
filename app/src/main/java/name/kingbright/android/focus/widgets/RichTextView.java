@@ -34,14 +34,29 @@ import name.kingbright.android.focus.R;
  * @since 16/4/6
  */
 public class RichTextView extends LinearLayout {
-    private static final String TAG = "RichTextView1";
+    private static final String TAG = "RichTextView";
     private static Pattern IMAGE_TAG_PATTERN = Pattern.compile("\\<img(.*?)\\>");
+    private static Pattern VIDEO_TAG_PATTERN = Pattern.compile("\\<video(.*?)\\>");
     private static Pattern IMAGE_WIDTH_PATTERN = Pattern.compile("width=\"(.*?)\"");
     private static Pattern IMAGE_HEIGHT_PATTERN = Pattern.compile("height=\"(.*?)\"");
     private static Pattern IMAGE_SRC_PATTERN = Pattern.compile("src=\"(.*?)\"");
 
     private ArrayList<ImageHolder> mImages;
+
     private ArrayList<RenderItem> mRenderList;
+    private Runnable mDisplayRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mDisplayed = true;
+            Context context = getContext();
+            LayoutInflater inflater = LayoutInflater.from(context);
+            for (RenderItem renderItem : mRenderList) {
+                View view = renderItem.getView(inflater, context);
+                addView(view);
+            }
+        }
+    };
+    private boolean mDisplayed = false;
 
     public RichTextView(Context context) {
         super(context);
@@ -60,8 +75,18 @@ public class RichTextView extends LinearLayout {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        if (!mDisplayed) {
+            mDisplayRunnable.run();
+        }
+    }
+
     public void setHtmlText(String text) {
-        mRenderList = new ArrayList<>();
+        mDisplayed = false;
+        // Remove old childs
+        removeAllViews();
         // Find all image tags
         matchImages(text);
         LogUtil.d(TAG, "Images : " + mImages.size());
@@ -76,40 +101,35 @@ public class RichTextView extends LinearLayout {
 
         ImageSpan[] imageSpans = builder.getSpans(0, builder.length(), ImageSpan.class);
 
-        ArrayList<RenderItem> renderItemArrayList = new ArrayList<>();
+        mRenderList = new ArrayList<>();
         if (imageSpans == null || imageSpans.length == 0) {
-            renderItemArrayList.add(new TextRenderItem(spanned));
+            mRenderList.add(new TextRenderItem(spanned));
         } else {
-            for (int i = imageSpans.length - 1; i > 0; i--) {
+            for (int i = imageSpans.length - 1; i >= 0; i--) {
                 ImageSpan imageSpan = imageSpans[i];
                 int imageStart = builder.getSpanStart(imageSpan);
                 int imageEnd = builder.getSpanEnd(imageSpan);
                 if (imageEnd == builder.length() - 1) {
                     builder.delete(imageStart, imageEnd);
-
-                    renderItemArrayList.add(0, new ImageRenderItem(mImages.remove(mImages.size() - 1)));
+                    mRenderList.add(0, new ImageRenderItem(mImages.remove(mImages.size() - 1)));
                     continue;
                 }
 
                 CharSequence charSequence = builder.subSequence(imageEnd, builder.length() - 1);
                 builder.delete(imageStart, builder.length() - 1);
 
-                renderItemArrayList.add(0, new TextRenderItem(charSequence));
-                renderItemArrayList.add(0, new ImageRenderItem(mImages.remove(mImages.size() - 1)));
+                mRenderList.add(0, new TextRenderItem(charSequence));
+                mRenderList.add(0, new ImageRenderItem(mImages.remove(mImages.size() - 1)));
             }
             if (builder.length() > 0) {
-                renderItemArrayList.add(0, new TextRenderItem(builder));
+                mRenderList.add(0, new TextRenderItem(builder));
             }
         }
 
-        Context context = getContext();
-        LayoutInflater inflater = LayoutInflater.from(context);
-        for (RenderItem renderItem : renderItemArrayList) {
-            View view = renderItem.getView(inflater, context);
-//            LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            addView(view);
+        if (getWidth() > 0) {
+            mDisplayRunnable.run();
         }
-        LogUtil.d(TAG, "render items : " + renderItemArrayList.size());
+        LogUtil.d(TAG, "render items : " + mRenderList.size());
     }
 
     /**
@@ -208,7 +228,7 @@ public class RichTextView extends LinearLayout {
         protected View getView(LayoutInflater inflater, Context context, ImageHolder data) {
             ImageView imageView = (ImageView) inflater.inflate(R.layout.image_view, RichTextView.this, false);
             PipelineDraweeControllerBuilder builder = imageView.getControllerBuilder();
-            builder.setControllerListener(new ControllerListener<ImageInfo>() {
+            builder.setAutoPlayAnimations(true).setControllerListener(new ControllerListener<ImageInfo>() {
                 ImageView imageView;
 
                 @Override
@@ -218,10 +238,22 @@ public class RichTextView extends LinearLayout {
 
                 @Override
                 public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable animatable) {
-                    int width = imageInfo.getWidth();
-                    int height = imageInfo.getHeight();
-                    imageView.setMinimumWidth(width*2);
-                    imageView.setMinimumHeight(height);
+                    int imageWidth = imageInfo.getWidth();
+                    int imageHeight = imageInfo.getHeight();
+
+                    int width = RichTextView.this.getWidth();
+                    LayoutParams params;
+                    float ratio = (float) width / (float) imageWidth;
+                    if (ratio < 2) {
+                        float actualHeight = ratio * imageHeight;
+                        params = new LayoutParams(width, (int) actualHeight);
+                    } else {
+                        ratio = 2;
+                        float actualWidth = ratio * imageWidth;
+                        float actualHeight = ratio * imageHeight;
+                        params = new LayoutParams((int) actualWidth, (int) actualHeight);
+                    }
+                    imageView.setLayoutParams(params);
                 }
 
                 @Override
