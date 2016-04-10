@@ -62,7 +62,7 @@ public class RssItemListFragment extends BaseFragment {
             }
         });
 
-        mAdapter = new RecyclerAdapter<RssViewBinder, Source>() {
+        mAdapter = new RecyclerAdapter<RssViewBinder, Source>(getAppContext()) {
             @Override
             protected RssViewBinder createView(LayoutInflater inflater, ViewGroup parent, int viewType) {
                 Context context = parent.getContext();

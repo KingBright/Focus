@@ -36,9 +36,10 @@ import name.kingbright.android.focus.R;
  * @since 16/4/6
  */
 public class RichTextView extends LinearLayout {
-
     private static RecycledViewPool recycledViewPool = new RecycledViewPool();
+
     private static final String TAG = "RichTextView";
+
     private static Pattern IMAGE_TAG_PATTERN = Pattern.compile("\\<img(.*?)\\>");
     private static Pattern VIDEO_TAG_PATTERN = Pattern.compile("\\<video(.*?)\\>");
     private static Pattern IMAGE_WIDTH_PATTERN = Pattern.compile("width=\"(.*?)\"");
@@ -50,21 +51,28 @@ public class RichTextView extends LinearLayout {
     private ArrayList<VideoHolder> mVideos;
 
     private ArrayList<RenderItem> mRenderList;
+
     private Runnable mDisplayRunnable = new Runnable() {
         @Override
         public void run() {
-            mViews = new ArrayList<>();
-            mDisplayed = true;
-            Context context = getContext();
-            LayoutInflater inflater = LayoutInflater.from(context);
-            for (RenderItem renderItem : mRenderList) {
-                View view = renderItem.getView(inflater, context);
-                mViews.add(view);
-                addView(view);
+//            if (!mLayouted || mDisplayed) {
+//                return;
+//            }
+            if (mRenderList != null) {
+                mViews = new ArrayList<>();
+                mDisplayed = true;
+                Context context = getContext();
+                LayoutInflater inflater = LayoutInflater.from(context);
+                for (RenderItem renderItem : mRenderList) {
+                    View view = renderItem.getView(inflater, context);
+                    mViews.add(view);
+                    addView(view);
+                }
             }
         }
     };
     private boolean mDisplayed = false;
+    private boolean mLayouted = false;
 
     public RichTextView(Context context) {
         super(context);
@@ -86,9 +94,8 @@ public class RichTextView extends LinearLayout {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        if (!mDisplayed) {
-            mDisplayRunnable.run();
-        }
+//        mLayouted = true;
+//        mDisplayRunnable.run();
     }
 
     @Override
@@ -100,18 +107,36 @@ public class RichTextView extends LinearLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        removeAllViews();
-        for (View view : mViews) {
-            recycledViewPool.putView(view);
-        }
         recycledViewPool.onViewDetached();
     }
 
+    private void recycle() {
+        if (mImages != null) {
+            mImages.clear();
+        }
+        if (mRenderList != null) {
+            mRenderList.clear();
+            mRenderList = null;
+        }
+
+        if (getChildCount() != 0) {
+            removeAllViews();
+        }
+        
+        if (mViews != null) {
+            for (View view : mViews) {
+                recycledViewPool.putView(view);
+            }
+            mViews.clear();
+        }
+    }
+
     public void setHtmlText(String text) {
+        recycle();
+        LogUtil.d(TAG, "setHtmlText " + hashCode());
         mDisplayed = false;
         // Find all image tags
         matchImages(text);
-        LogUtil.d(TAG, "Images : " + mImages.size());
         // Remove image span and replace with ImageView
         Spanned spanned = Html.fromHtml(text);
         SpannableStringBuilder builder;
@@ -148,10 +173,7 @@ public class RichTextView extends LinearLayout {
             }
         }
 
-        if (getWidth() > 0) {
-            mDisplayRunnable.run();
-        }
-        LogUtil.d(TAG, "render items : " + mRenderList.size());
+        mDisplayRunnable.run();
     }
 
     /**
@@ -368,7 +390,6 @@ public class RichTextView extends LinearLayout {
                 list = new ArrayList<>();
                 recycledViews.append(type, list);
             }
-            LogUtil.d(TAG, "put cache view : " + view.getClass().getName() + " with type : " + type);
             list.add(view);
         }
 
@@ -390,8 +411,8 @@ public class RichTextView extends LinearLayout {
             if (list == null || list.size() == 0) {
                 return null;
             } else {
-                LogUtil.d(TAG, "get cached view");
-                return list.remove(0);
+                View view = list.remove(0);
+                return view;
             }
         }
 

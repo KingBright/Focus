@@ -22,6 +22,7 @@ public class MainActivity extends BaseAppCompactActivity
     @Override
     protected void create(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

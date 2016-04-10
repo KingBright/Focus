@@ -77,7 +77,7 @@ public class RssChannelFragment extends BaseFragment {
             }
         });
 
-        mAdapter = new RecyclerAdapter<RssViewBinder, Source>() {
+        mAdapter = new RecyclerAdapter<RssViewBinder, Source>(getAppContext()) {
             @Override
             protected RssViewBinder createView(LayoutInflater inflater, ViewGroup parent, int viewType) {
                 Context context = parent.getContext();
@@ -115,8 +115,9 @@ public class RssChannelFragment extends BaseFragment {
                 return;
             }
 
-            final ProgressDialog dialog = new ProgressDialog(getContext());
+            final ProgressDialog dialog = new ProgressDialog(getActivity());
             dialog.setMessage(getString(R.string.trying_to_load));
+            dialog.setCancelable(false);
             dialog.show();
             FeedFetcher.getInstance().fetch(data.url).subscribe(new Observer<Rss>() {
                 @Override
@@ -128,6 +129,7 @@ public class RssChannelFragment extends BaseFragment {
                 public void onError(Throwable e) {
                     LogUtil.d("Rss", e);
                     e.printStackTrace();
+                    Toast.makeText(getAppContext(), R.string.loading_error, Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 }
 
