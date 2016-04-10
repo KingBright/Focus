@@ -16,6 +16,7 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.VideoView;
 
@@ -35,7 +36,7 @@ import name.kingbright.android.focus.R;
  * @author Jin Liang
  * @since 16/4/6
  */
-public class RichTextView extends LinearLayout {
+public class RichTextView extends LinearLayout implements ViewTreeObserver.OnGlobalLayoutListener {
     private static RecycledViewPool recycledViewPool = new RecycledViewPool();
 
     private static final String TAG = "RichTextView";
@@ -52,15 +53,17 @@ public class RichTextView extends LinearLayout {
 
     private ArrayList<RenderItem> mRenderList;
 
+    private boolean mDisplayed = false;
+    private boolean mLayouted = false;
     private Runnable mDisplayRunnable = new Runnable() {
         @Override
         public void run() {
-//            if (!mLayouted || mDisplayed) {
-//                return;
-//            }
+            if (mDisplayed) {
+                return;
+            }
             if (mRenderList != null) {
+                LogUtil.d(TAG, "display");
                 mViews = new ArrayList<>();
-                mDisplayed = true;
                 Context context = getContext();
                 LayoutInflater inflater = LayoutInflater.from(context);
                 for (RenderItem renderItem : mRenderList) {
@@ -71,31 +74,31 @@ public class RichTextView extends LinearLayout {
             }
         }
     };
-    private boolean mDisplayed = false;
-    private boolean mLayouted = false;
 
     public RichTextView(Context context) {
         super(context);
+        init();
     }
 
     public RichTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public RichTextView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
     }
+
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public RichTextView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        init();
     }
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-//        mLayouted = true;
-//        mDisplayRunnable.run();
+    private void init() {
+        getViewTreeObserver().addOnGlobalLayoutListener(this);
     }
 
     @Override
@@ -122,19 +125,20 @@ public class RichTextView extends LinearLayout {
         if (getChildCount() != 0) {
             removeAllViews();
         }
-        
+
         if (mViews != null) {
             for (View view : mViews) {
                 recycledViewPool.putView(view);
             }
             mViews.clear();
         }
+
+        mDisplayed = false;
     }
 
     public void setHtmlText(String text) {
         recycle();
         LogUtil.d(TAG, "setHtmlText " + hashCode());
-        mDisplayed = false;
         // Find all image tags
         matchImages(text);
         // Remove image span and replace with ImageView
@@ -173,7 +177,9 @@ public class RichTextView extends LinearLayout {
             }
         }
 
-        mDisplayRunnable.run();
+        if (mLayouted) {
+            mDisplayRunnable.run();
+        }
     }
 
     /**
@@ -237,6 +243,14 @@ public class RichTextView extends LinearLayout {
             return matcher.group(1);
         }
         return null;
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    public void onGlobalLayout() {
+        mLayouted = true;
+        mDisplayRunnable.run();
+        getViewTreeObserver().removeOnGlobalLayoutListener(this);
     }
 
     private class ImageHolder {
@@ -318,22 +332,26 @@ public class RichTextView extends LinearLayout {
 
                 @Override
                 public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable animatable) {
+                    LogUtil.d(TAG, "image loaded");
                     int imageWidth = imageInfo.getWidth();
                     int imageHeight = imageInfo.getHeight();
 
                     int width = RichTextView.this.getWidth();
+                    LogUtil.d(TAG, "TextView size : " + width);
                     LayoutParams params;
                     float ratio = (float) width / (float) imageWidth;
+                    float actualWidth, actualHeight;
                     if (ratio < 2) {
-                        float actualHeight = ratio * imageHeight;
-                        params = new LayoutParams(width, (int) actualHeight);
+                        actualWidth = width;
+                        actualHeight = ratio * imageHeight;
                     } else {
                         ratio = 2;
-                        float actualWidth = ratio * imageWidth;
-                        float actualHeight = ratio * imageHeight;
-                        params = new LayoutParams((int) actualWidth, (int) actualHeight);
+                        actualWidth = ratio * imageWidth;
+                        actualHeight = ratio * imageHeight;
                     }
+                    params = new LayoutParams((int) actualWidth, (int) actualHeight);
                     imageView.setLayoutParams(params);
+                    LogUtil.d(TAG, "set ImageView size : " + actualWidth + "*" + actualHeight);
                 }
 
                 @Override
