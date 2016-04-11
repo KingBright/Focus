@@ -34,6 +34,7 @@ public class MainActivity extends BaseAppCompactActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
     }
 
     @Override

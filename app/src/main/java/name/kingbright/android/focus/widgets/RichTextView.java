@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import name.kingbright.android.brilliant.log.LogUtil;
 import name.kingbright.android.brilliant.widgets.ImageView;
 import name.kingbright.android.focus.R;
 
@@ -62,7 +61,6 @@ public class RichTextView extends LinearLayout implements ViewTreeObserver.OnGlo
                 return;
             }
             if (mRenderList != null) {
-                LogUtil.d(TAG, "display");
                 mViews = new ArrayList<>();
                 Context context = getContext();
                 LayoutInflater inflater = LayoutInflater.from(context);
@@ -138,7 +136,6 @@ public class RichTextView extends LinearLayout implements ViewTreeObserver.OnGlo
 
     public void setHtmlText(String text) {
         recycle();
-        LogUtil.d(TAG, "setHtmlText " + hashCode());
         // Find all image tags
         matchImages(text);
         // Remove image span and replace with ImageView
@@ -332,26 +329,23 @@ public class RichTextView extends LinearLayout implements ViewTreeObserver.OnGlo
 
                 @Override
                 public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable animatable) {
-                    LogUtil.d(TAG, "image loaded");
                     int imageWidth = imageInfo.getWidth();
                     int imageHeight = imageInfo.getHeight();
 
                     int width = RichTextView.this.getWidth();
-                    LogUtil.d(TAG, "TextView size : " + width);
                     LayoutParams params;
                     float ratio = (float) width / (float) imageWidth;
                     float actualWidth, actualHeight;
-                    if (ratio < 2) {
+                    if (ratio < 4) {
                         actualWidth = width;
                         actualHeight = ratio * imageHeight;
                     } else {
-                        ratio = 2;
+                        ratio = 4;
                         actualWidth = ratio * imageWidth;
                         actualHeight = ratio * imageHeight;
                     }
                     params = new LayoutParams((int) actualWidth, (int) actualHeight);
                     imageView.setLayoutParams(params);
-                    LogUtil.d(TAG, "set ImageView size : " + actualWidth + "*" + actualHeight);
                 }
 
                 @Override
