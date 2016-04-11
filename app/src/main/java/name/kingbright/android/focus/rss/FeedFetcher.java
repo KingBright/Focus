@@ -21,6 +21,8 @@ public class FeedFetcher {
         BNet.Config config = new BNet.Config();
         config.baseUrl = "http://kingbright.name";
         config.factory = SimpleXmlConverterFactory.createNonStrict();
+        config.cacheTime = 3600;
+        config.staleTime = 3600 * 24;
 
         service = BNet.createService(config, FeedService.class);
     }
